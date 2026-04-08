@@ -1,0 +1,154 @@
+auth_enabled: false
+
+# Configuration de l'ingestion des logs
+ingester:
+  # Délai avant la fermeture des chunks non actifs
+  chunk_idle_period: 3m
+  
+  # Durée de rétention des chunks fermés dans la mémoire
+  chunk_retain_period: 1m
+  
+  # Âge maximum d'un chunk avant sa fermeture automatique
+  max_chunk_age: 1h
+  
+  # Format de compression des chunks
+  chunk_encoding: gzip
+  
+  # Limite de la taille des chunks en octets
+  max_chunk_size: 262144
+  
+  # Nombre de workers parallèles pour l'ingestion
+  num_worker_threads: 4
+
+# Configuration des limites
+limits_config:
+  # Appliquer une validation des noms de métriques
+  enforce_metric_name: false
+  
+  # Rejeter les anciens samples
+  reject_old_samples: true
+  
+  # Âge maximum avant rejet des samples
+  reject_old_samples_max_age: 168h
+  
+  # Limite de labels par stream
+  max_label_names_per_series: 30
+  
+  # Limite de la taille des entrées (bytes)
+  max_line_size: 256000
+
+# Schéma de stockage
+schema_config:
+  configs:
+  - from: 2020-10-24
+    store: boltdb-shipper
+    object_store: filesystem
+    schema:
+      version: v11
+      index:
+        prefix: index_
+        period: 24h
+      stream:
+        default_shards: 2
+    row_shards: 16
+
+# Configuration du serveur
+server:
+  http_listen_port: 3100
+  http_listen_address: 0.0.0.0
+  gpc_listen_port: 0
+  
+  # Niveau de log (debug, info, warn, error)
+  log_level: info
+  
+  # Timeout des requêtes
+  http_server_read_timeout: 600s
+  http_server_write_timeout: 600s
+  
+  # Graceful shutdown timeout
+  graceful_shutdown_timeout: 30s
+
+# Configuration du stockage
+storage_config:
+  # Configuration du BoltDB Shipper
+  boltdb_shipper:
+    # Répertoire pour les index actifs
+    active_index_directory: /loki/boltdb-shipper-active
+    
+    # Répertoire du cache
+    cache_location: /loki/boltdb-shipper-cache
+    
+    # Utiliser le stockage partagé en filesystem
+    shared_store: filesystem
+    
+    # Intervalle de compaction
+    compaction_interval: 10m
+    
+    # Délai avant suppression des index
+    deletion_time: 10m
+  
+  # Configuration du système de fichiers
+  filesystem:
+    directory: /loki/chunks
+
+# Configuration du chunk store
+chunk_store_config:
+  # Période maximale de lookback (0 = unlimited)
+  max_look_back_period: 0s
+
+# Configuration de la table manager (pour la rétention)
+table_manager:
+  # Activer la suppression des tables anciennes
+  retention_deletes_enabled: false
+  
+  # Période de rétention (0 = aucune limite)
+  retention_period: 0s
+  
+  # Intervalle de poll des tables
+  poll_interval: 10m
+
+# Configuration du query frontend (cache)
+query_range:
+  # Activer le cache
+  cache_results: true
+  
+  # Résultats du cache
+  result_cache:
+    cache:
+      enable_fifocache: true
+      
+      default_validity: 1m
+      
+  # Alignment of queryrange requests
+  align_queries_with_cache: true
+  
+  # Max cacheably short intervals
+  max_cache_freshness_per_query: 10m
+  
+  # Compression type (snappy, gzip, lz4)
+  compression: snappy
+
+# Configuration du cache (optionnel)
+cache_config:
+  enable_fifo_cache: true
+  default_validity: 1m
+
+# Configuration de la runtime (optionnel - pour les mises à jour sans redémarrage)
+runtime_config:
+  enabled: false
+
+# Période de suppression
+table_manager_retention_enabled: false
+table_manager_retention_deletes_enabled: false
+table_manager_poll_interval: 10m
+
+# Configuration du WAL (Write Ahead Log)
+ingester_waf:
+  enabled: true
+  dir: /loki/wal
+  
+  # Checkpoint chaque X minutes dans le WAL
+  checkpoint_duration: 5m
+  
+  # Replay des entrées anciennes
+  replay_memory_ceiling: 4GB
